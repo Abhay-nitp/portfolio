@@ -1,0 +1,136 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border: 1px solid #ccc;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+    <script>
+        // Firebase configuration (same as form.html)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBoJWFGfKid5w7YE9Q-bM0CNO92M--hulc",
+
+authDomain: "form-e4bfa.firebaseapp.com",
+
+projectId: "form-e4bfa",
+
+storageBucket: "form-e4bfa.firebasestorage.app",
+
+messagingSenderId: "1032978038499",
+
+appId: "1:1032978038499:web:28041c94cf3a57764b4fd6",
+
+measurementId: "G-2LXXGLC3M2"
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Function to fetch and display submissions
+        async function fetchSubmissions() {
+            const submissionsTable = document.getElementById('submissionsTable').getElementsByTagName('tbody')[0];
+            submissionsTable.innerHTML = ""; // Clear table contents
+
+            try {
+                const submissionsSnapshot = await db.collection("submissions").orderBy("submittedAt", "desc").get();
+
+                if (submissionsSnapshot.empty) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td colspan="6" style="text-align: center;">No submissions available.</td>`;
+                    submissionsTable.appendChild(row);
+                    return;
+                }
+
+                submissionsSnapshot.forEach(doc => {
+                    const data = doc.data();
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${data.name}</td>
+                        <td>${data.email}</td>
+                        <td>${data.subject}</td>
+                        <td>${data.message}</td>
+                        <td>${new Date(data.submittedAt.seconds * 1000).toLocaleString()}</td>
+                        <td><button onclick="deleteSubmission('${doc.id}')">Delete</button></td>
+                    `;
+                    submissionsTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching submissions:", error);
+                const row = document.createElement('tr');
+                row.innerHTML = `<td colspan="6" style="text-align: center; color: red;">Error fetching submissions.</td>`;
+                submissionsTable.appendChild(row);
+            }
+        }
+
+        // Function to delete a submission
+        async function deleteSubmission(docId) {
+            if (confirm("Are you sure you want to delete this submission?")) {
+                try {
+                    await db.collection("submissions").doc(docId).delete();
+                    alert("Submission deleted successfully.");
+                    fetchSubmissions(); // Refresh the table after deletion
+                } catch (error) {
+                    console.error("Error deleting submission:", error);
+                    alert("Failed to delete the submission. Please try again.");
+                }
+            }
+        }
+
+        // Load submissions when the page loads
+        window.onload = fetchSubmissions;
+    </script>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    <table border="1" id="submissionsTable">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Subject</th>
+                <th>Message</th>
+                <th>Submitted At</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Form data will be dynamically populated here -->
+        </tbody>
+    </table>
+</body>
+</html>
